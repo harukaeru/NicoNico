@@ -140,7 +140,14 @@ print("ダウンロード完了。動画ファイル作成処理", "---", RIGHT_
 # because of dull to distinct extensions
 d_name = title_text + '.mp4'
 conv_name = title_text + '.mp3'
-down = open(d_name, 'wb')
+down = None
+try:
+    down = open(d_name, 'wb')
+except:
+    d_name = sys.argv[1] + '.mp4'
+    down = open(d_name, 'wb')
+    conv_name = sys.argv[1] + '.mp3'
+
 down.write(content)
 
 print("-"*50)
