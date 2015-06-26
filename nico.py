@@ -24,7 +24,7 @@ if len(sys.argv) < 2:
     print('動画のID入力してね:sm444444みたいなやつ。たとえ動画のID間違えても無理矢理続行するよ')
     exit()
 
-FLV_ID = sys.argv[1]
+FLV_ID = sys.argv[1] if sys.argv[1].find('/') == -1 else sys.argv[1].split('/')[-1]
 
 if PASS == '':
     if len(sys.argv) < 3:
@@ -133,6 +133,9 @@ print("-"*50) ##################################################################
 print("ダウンロード開始", "GET", RIGHT_ARROW, download_uri)
 response, content = ht.request(uri=download_uri, method='GET', headers=headers)
 print(response)
+if response['status'] == '403':
+    print('\nダウンロード禁止されてる……')
+    exit()
 
 print("-"*50)
 
