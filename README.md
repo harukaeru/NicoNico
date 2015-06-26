@@ -23,9 +23,10 @@ Mac OS X を前提としています。
 ### Homebrewのインストール
 ggrks
 
-### ffmpegのインストール
+### ffmpegやpython3.4のインストール
 ```コマンド
 $ brew install ffmpeg
+$ brew install python3
 ```
 
 ### pipのインストール
