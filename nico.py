@@ -4,6 +4,7 @@ from pyquery import PyQuery as pq
 import sys
 import httplib2
 import re
+import pickle
 
 ### 設定 ###
 
@@ -24,7 +25,12 @@ if len(sys.argv) < 2:
     print('動画のID入力してね:sm444444みたいなやつ。たとえ動画のID間違えても無理矢理続行するよ')
     exit()
 
-FLV_ID = sys.argv[1] if sys.argv[1].find('/') == -1 else sys.argv[1].split('/')[-1]
+FLV_ID = sys.argv[1]
+if sys.argv[1].find('/') != -1:
+    FLV_ID = sys.argv[1].split('/')[-1]
+
+    if FLV_ID.find('?') != -1:
+        FLV_ID = FLV_ID.split('?')[0]
 
 if PASS == '':
     if len(sys.argv) < 3:
@@ -40,16 +46,11 @@ class x:
 if not VERBOSE_LOG:
     sys.stdout = x()
 
-
-headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Encoding": "gzip, deflate, sdch",
-    "Accept-Language": "ja,en-US;q=0.8,en;q=0.6,zh-TW;q=0.4,zh;q=0.2",
-    "Cache-Control": "max-age=0",
-    "Connection": "keep-alive",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "User-Agent": "KaeruKun Browser"
-}
+headers = None
+try:
+    headers = pickle.load(open('header.dump', 'rb'))
+except:
+    pass
 
 LOGIN_BEFORE_URI = 'https://account.nicovideo.jp/login'
 
@@ -59,38 +60,54 @@ FORM_BODY = {"mail_tel":MAIL,"password":PASS}
 GET_FLV_URI = "http://flapi.nicovideo.jp/api/getflv/{0}".format(FLV_ID)
 GET_WATCH_URI = "http://www.nicovideo.jp/watch/{0}".format(FLV_ID)
 
-FLV_ID = sys.argv[1]
 RIGHT_ARROW = '->'
-
-def set_co(response_cookie):
-    set_cookies = re.split(r'user_session=', response['set-cookie'])
-    print(set_cookies)
-    for cookie in set_cookies:
-        if cookie.startswith('user_session'):
-            return 'user_session=' + cookie
-    raise Exception()
-
 ht = httplib2.Http()
 
-print("-"*50) ####################################################################
-print("ログイン処理", "GET", RIGHT_ARROW, LOGIN_BEFORE_URI)
+if not headers:
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, sdch",
+        "Accept-Language": "ja,en-US;q=0.8,en;q=0.6,zh-TW;q=0.4,zh;q=0.2",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "KaeruKun Browser"
+    }
 
-ht.add_credentials('mail_tel', 'password')
-response, content = ht.request(uri=LOGIN_BEFORE_URI, method='GET')
 
-print(response)
+    def set_co(response_cookie):
+        set_cookies = re.split(r'user_session=', response['set-cookie'])
+        print(set_cookies)
+        for cookie in set_cookies:
+            if cookie.startswith('user_session'):
+                return 'user_session=' + cookie
+        raise Exception()
 
-print("-"*50) ####################################################################
-print("ログイン処理", "POST", RIGHT_ARROW, LOGIN_URI)
-response, content = ht.request(uri=LOGIN_URI, method='POST', body=urlencode(FORM_BODY), headers=headers, redirections=10)
 
-print(response)
-print(content)
+    print("-"*50) ####################################################################
+    print("ログイン処理", "GET", RIGHT_ARROW, LOGIN_BEFORE_URI)
 
-print("-"*50) ####################################################################
+    ht.add_credentials('mail_tel', 'password')
+    response, content = ht.request(uri=LOGIN_BEFORE_URI, method='GET')
 
-print("クッキーをセット", "---", RIGHT_ARROW)
-headers['Cookie'] = set_co(response['set-cookie'])
+    print(response)
+
+    print("-"*50) ####################################################################
+    print("ログイン処理", "POST", RIGHT_ARROW, LOGIN_URI)
+    response, content = ht.request(uri=LOGIN_URI, method='POST', body=urlencode(FORM_BODY), headers=headers, redirections=10)
+
+    print(response)
+    print(content)
+
+    print("-"*50) ####################################################################
+
+    print("クッキーをセット", "---", RIGHT_ARROW)
+    headers['Cookie'] = set_co(response['set-cookie'])
+
+    print("クッキーを保存", "---", RIGHT_ARROW)
+    header_dump = open('header.dump', 'wb')
+    pickle.dump(headers, header_dump)
+    header_dump.close()
 
 print("-"*50) ####################################################################
 
@@ -147,9 +164,9 @@ down = None
 try:
     down = open(d_name, 'wb')
 except:
-    d_name = sys.argv[1] + '.mp4'
+    d_name = FLV_ID + '.mp4'
     down = open(d_name, 'wb')
-    conv_name = sys.argv[1] + '.mp3'
+    conv_name = FLV_ID + '.mp3'
 
 down.write(content)
 
