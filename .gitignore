@@ -1,1 +1,6 @@
 secret.sh
+*.mp3
+*.mp4
+*.flv
+*.pyc
+*.dump
