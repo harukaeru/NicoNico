@@ -1,6 +1,7 @@
 from subprocess import call
 from urllib.parse import urlencode, unquote
 from pyquery import PyQuery as pq
+import datetime
 import sys
 import httplib2
 import re
@@ -48,7 +49,9 @@ if not VERBOSE_LOG:
 
 headers = None
 try:
-    headers = pickle.load(open('header.dump', 'rb'))
+     obj = pickle.load(open('header.dump', 'rb'))
+     if datetime.datetime.now() < datetime.timedelta(days=1) + obj['time']:
+         headers = obj['h']
 except:
     pass
 
@@ -104,9 +107,10 @@ if not headers:
     print("クッキーをセット", "---", RIGHT_ARROW)
     headers['Cookie'] = set_co(response['set-cookie'])
 
-    print("クッキーを保存", "---", RIGHT_ARROW)
+    print("ヘッダを保存", "---", RIGHT_ARROW)
+    obj = {'h': headers, 'time': datetime.datetime.now()}
     header_dump = open('header.dump', 'wb')
-    pickle.dump(headers, header_dump)
+    pickle.dump(obj, header_dump)
     header_dump.close()
 
 print("-"*50) ####################################################################
